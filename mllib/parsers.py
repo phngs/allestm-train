@@ -12,6 +12,69 @@ max_solvent_acc = {'A': 106.0, 'C': 135.0, 'D': 163.0,
                    'W': 227.0, 'Y': 222.0}
 
 
+def psipred(infile, sequence):
+    """Parses the PSIPRED .horiz output file.
+
+    Parameters
+    ----------
+    infile : str
+        PSIPRED .horiz file.
+    sequence : SeqRecord
+        sequence: SeqRecord object or any other object whichs __len__ method
+        returns the length of the sequence.
+
+    Returns:
+        NumPy array.
+
+    """
+    aa2sec = {
+        'H': [1, 0, 0],
+        'E': [0, 1, 0],
+        'C': [0, 0, 1]
+    }
+    result = []
+    with open(infile, 'r') as fh:
+        for line in fh:
+            if line.startswith('Pred:'):
+                spl = line.strip().split(' ')
+                if len(spl) < 2:
+                    continue
+                for aa in spl[1]:
+                    result.append(aa2sec[aa])
+
+    return np.array([result])
+
+
+def prof(infile, sequence):
+    """Parses the prof .profRdb output file.
+
+    Parameters
+    ----------
+    infile : str
+        Prof .profRdb file.
+    sequence : SeqRecord
+        sequence: SeqRecord object or any other object whichs __len__ method
+        returns the length of the sequence.
+
+    Returns:
+        NumPy array.
+
+    """
+    aa2sec = {
+        'H': [1, 0, 0],
+        'E': [0, 1, 0],
+        'L': [0, 0, 1]
+    }
+    result = []
+    with open(infile, 'r') as fh:
+        for line in fh:
+            if not line.startswith('#') and not line.startswith('No'):
+                aa = line.strip().split()[3]
+                result.append(aa2sec[aa])
+
+    return np.array([result])
+
+
 def anglor(infile, sequence):
     """
     Parses the ANGLOR output file.
@@ -76,11 +139,13 @@ def memsat_svm(infile, sequence):
                 if not line.strip().endswith("Not detected."):
                     sp = line.split(":")[1].strip().split("-")[1]
             elif line.startswith("Topology"):
-                tms = [[y[0]-1, y[1]] for y in [list(map(int, x.split("-"))) for x in line.split(":")[1].strip().split(",")]]
+                tms = [[y[0]-1, y[1]] for y in [list(map(int, x.split("-")))
+                                                for x in line.split(":")[1].strip().split(",")]]
             elif line.startswith("Re-entrant helices:"):
                 reh = []
                 if not line.strip().endswith("Not detected."):
-                    reh = [[y[0]-1, y[1]] for y in [list(map(int, x.split("-"))) for x in line.split(":")[1].strip().split(",")]]
+                    reh = [[y[0]-1, y[1]] for y in [list(map(int, x.split("-")))
+                                                    for x in line.split(":")[1].strip().split(",")]]
             elif line.startswith("N-terminal"):
                 orient = line.split(":")[1].strip()
 
@@ -133,7 +198,8 @@ def polyphobius(infile, sequence):
                     if split[4] == "CYTOPLASMIC.":
                         doms.append(["cyto", int(split[2]) - 1, int(split[3])])
                     else:
-                        doms.append(["noncyto", int(split[2]) - 1, int(split[3])])
+                        doms.append(
+                            ["noncyto", int(split[2]) - 1, int(split[3])])
                 elif split[1] == "TRANSMEM":
                     tms.append([int(split[2]) - 1, int(split[3])])
 

@@ -86,6 +86,9 @@ ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} pyth
 
 ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spinex_sec categorical.SecStruc ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spXout
 
+ls data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py data.db prof categorical.SecStruc data/{}.fasta data/{}.profRdb
+ls data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py data.db psipred categorical.SecStruc data/{}.fasta data/{}.horiz
+
 ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spinex_rsa continuous.RsaComplex ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spXout
 ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spinex_rsa continuous.RsaChain ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spXout
 
