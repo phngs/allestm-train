@@ -13,9 +13,8 @@ jupyterlab = "*"
 keras = "*"
 sklearn = "*"
 seaborn = "*"
-tensorflow = "*"
 matplotlib = "*"
 biopython = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"

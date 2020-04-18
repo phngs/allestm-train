@@ -178,7 +178,7 @@ def build_model(target, params):
         model_cls = RandomForestClassifier
 
     return model_cls(
-        n_estimators=100, #params['n_estimators'],
+        n_estimators=100,  # params['n_estimators'],
         max_features=params['max_features'],
         max_depth=params['max_depth'],
         min_samples_split=params['min_samples_split'],
@@ -285,7 +285,7 @@ def process_predictions(lengths, target, raw_predicted):
     predicted = []
     start = 0
     for l in lengths:
-        pred = raw_predicted[start:start+l]
+        pred = raw_predicted[start:start + l]
         start += l
         if hasattr(target, 'inverse_transform'):
             pred = target.inverse_transform(pred)
@@ -346,120 +346,121 @@ def main(argv):
 
     for window in params_map['window']:
         for max_features in params_map['max_features']:
-                for min_samples_leaf in params_map['min_samples_leaf']:
-                    params = {
-                        'window': window,
-                        'n_estimators': params_map['n_estimators'], #n_estimators,
-                        'max_features': max_features,
-                        'max_depth': None,
-                        'min_samples_leaf': min_samples_leaf,
-                        'min_samples_split': 2,
-                        'n_jobs': 6,
-                        'verbose': 2
-                    }
+            for min_samples_leaf in params_map['min_samples_leaf']:
+                params = {
+                    'window': window,
+                    'n_estimators': params_map['n_estimators'],  # n_estimators,
+                    'max_features': max_features,
+                    'max_depth': None,
+                    'min_samples_leaf': min_samples_leaf,
+                    'min_samples_split': 2,
+                    'n_jobs': 6,
+                    'verbose': 2
+                }
 
-                    improvements = []
+                improvements = []
 
-                    for fold in range(num_folds):
-                        log.info(f'Starting with fold {fold}.')
+                for fold in range(num_folds):
+                    log.info(f'Starting with fold {fold}.')
 
-                        prev_loss = None
-                        if db_model_exists(conn, args.experiment, fold):
-                            prev_loss = db_get_loss(conn, args.experiment, fold)
-                            log.info(f'Experiment {args.experiment} fold {fold} already exists with loss {prev_loss}.')
+                    prev_loss = None
+                    if db_model_exists(conn, args.experiment, fold):
+                        prev_loss = db_get_loss(conn, args.experiment, fold)
+                        log.info(f'Experiment {args.experiment} fold {fold} already exists with loss {prev_loss}.')
 
-                        log.info('Creating train dataset.')
-                        train_data = create_dataset(args.db_file, features, target, args.dataset_name, 'train', fold, window=params['window'], limit=args.limit)
+                    log.info('Creating train dataset.')
+                    train_data = create_dataset(args.db_file, features, target, args.dataset_name, 'train', fold, window=params['window'], limit=args.limit)
 
-                        log.info('Creating valid dataset.')
-                        valid_data = create_dataset(args.db_file, features, target, args.dataset_name, 'valid', fold, window=params['window'], limit=args.limit)
+                    log.info('Creating valid dataset.')
+                    valid_data = create_dataset(args.db_file, features, target, args.dataset_name, 'valid', fold, window=params['window'], limit=args.limit)
 
-                        log.info('Building model.')
-                        model = build_model(target, params)
+                    log.info('Building model.')
+                    model = build_model(target, params)
 
-                        log.info('Training model.')
-                        model = train_model(max(params_map['n_estimators']), model, target, train_data, valid_data)
-                        params['n_trees'] = len(model.estimators_)
+                    log.info('Training model.')
+                    model = train_model(max(params_map['n_estimators']), model, target, train_data, valid_data)
+                    params['n_trees'] = len(model.estimators_)
 
-                        importance = []
-                        for feat, imp in zip(train_data.feature_names, model.feature_importances_):
-                            importance.append([feat, imp])
+                    importance = []
+                    for feat, imp in zip(train_data.feature_names, model.feature_importances_):
+                        importance.append([feat, imp])
 
-                        importance = sorted(importance, key=lambda x: x[1])
-                        history = {'importance': importance}
+                    importance = sorted(importance, key=lambda x: x[1])
+                    history = {'importance': importance}
 
-                        valid_loss = eval_model(model, target, valid_data)
+                    valid_loss = eval_model(model, target, valid_data)
 
-                        del train_data
+                    del train_data
 
-                        improvements.append([fold, prev_loss, valid_loss, prev_loss is None or valid_loss > prev_loss])
+                    improvements.append([fold, prev_loss, valid_loss, prev_loss is None or valid_loss > prev_loss])
 
-                        if prev_loss is None or valid_loss > prev_loss:
-                            log.info(f'Validation loss improved. Previous loss was {prev_loss}, new loss is {valid_loss}.')
+                    if prev_loss is None or valid_loss > prev_loss:
+                        log.info(f'Validation loss improved. Previous loss was {prev_loss}, new loss is {valid_loss}.')
 
-                            log.info('Predicting on valid data.')
-                            valid_raw_predicted = test_model(model, valid_data)
+                        log.info('Predicting on valid data.')
+                        valid_raw_predicted = test_model(model, valid_data)
 
-                            log.info('Storing valid predictions.')
-                            valid_raw_observed = valid_data.data[valid_data.target_names].values
+                        log.info('Storing valid predictions.')
+                        valid_raw_observed = valid_data.data[valid_data.target_names].values
 
-                            valid_observed = process_predictions(valid_data.lengths, target, valid_raw_observed)
-                            valid_predicted = process_predictions(valid_data.lengths, target, valid_raw_predicted)
+                        valid_observed = process_predictions(valid_data.lengths, target, valid_raw_observed)
+                        valid_predicted = process_predictions(valid_data.lengths, target, valid_raw_predicted)
 
-                            db_store_predicted(conn, f'{args.experiment}_VALID_{fold}', target, valid_data.ids, valid_predicted, simulate=False)
-                            db_store_predicted(conn, 'observed', target, valid_data.ids, valid_observed, simulate=False)
+                        db_store_predicted(conn, f'{args.experiment}_VALID_{fold}', target, valid_data.ids, valid_predicted, simulate=False)
+                        db_store_predicted(conn, 'observed', target, valid_data.ids, valid_observed, simulate=False)
 
-                            del valid_data
+                        del valid_data
 
-                            log.info('Creating test dataset.')
-                            test_data = create_dataset(args.db_file, features, target, args.dataset_name, 'test', fold, window=params['window'], limit=args.limit)
+                        log.info('Creating test dataset.')
+                        test_data = create_dataset(args.db_file, features, target, args.dataset_name, 'test', fold, window=params['window'], limit=args.limit)
 
-                            log.info('Predicting on test data.')
-                            test_raw_predicted = test_model(model, test_data)
+                        log.info('Predicting on test data.')
+                        test_raw_predicted = test_model(model, test_data)
 
-                            log.info('Storing test predictions.')
-                            test_raw_observed = test_data.data[test_data.target_names].values
+                        log.info('Storing test predictions.')
+                        test_raw_observed = test_data.data[test_data.target_names].values
 
-                            test_observed = process_predictions(test_data.lengths, target, test_raw_observed)
-                            test_predicted = process_predictions(test_data.lengths, target, test_raw_predicted)
+                        test_observed = process_predictions(test_data.lengths, target, test_raw_observed)
+                        test_predicted = process_predictions(test_data.lengths, target, test_raw_predicted)
 
-                            db_store_predicted(conn, args.experiment, target, test_data.ids, test_predicted, simulate=False)
-                            db_store_predicted(conn, 'observed', target, test_data.ids, test_observed, simulate=False)
+                        db_store_predicted(conn, args.experiment, target, test_data.ids, test_predicted, simulate=False)
+                        db_store_predicted(conn, 'observed', target, test_data.ids, test_observed, simulate=False)
 
-                            del test_data
+                        del test_data
 
-                            log.info('Creating independent_test dataset.')
-                            independent_test_data = create_dataset(args.db_file, features, target, args.dataset_name, 'independent_test', 0, window=params['window'], limit=args.limit)
+                        log.info('Creating independent_test dataset.')
+                        independent_test_data = create_dataset(args.db_file, features, target, args.dataset_name, 'independent_test', 0, window=params['window'], limit=args.limit)
 
-                            log.info('Predicting on independent_test data.')
-                            independent_test_raw_predicted = test_model(model, independent_test_data)
+                        log.info('Predicting on independent_test data.')
+                        independent_test_raw_predicted = test_model(model, independent_test_data)
 
-                            log.info('Storing independent_test predictions.')
-                            independent_test_raw_observed = independent_test_data.data[independent_test_data.target_names].values
+                        log.info('Storing independent_test predictions.')
+                        independent_test_raw_observed = independent_test_data.data[independent_test_data.target_names].values
 
-                            independent_test_observed = process_predictions(independent_test_data.lengths, target, independent_test_raw_observed)
-                            independent_test_predicted = process_predictions(independent_test_data.lengths, target, independent_test_raw_predicted)
+                        independent_test_observed = process_predictions(independent_test_data.lengths, target, independent_test_raw_observed)
+                        independent_test_predicted = process_predictions(independent_test_data.lengths, target, independent_test_raw_predicted)
 
-                            db_store_predicted(conn, f'{args.experiment}_IND_TEST_{fold}', target, independent_test_data.ids, independent_test_predicted, simulate=False)
-                            db_store_predicted(conn, 'observed', target, independent_test_data.ids, independent_test_observed, simulate=False)
+                        db_store_predicted(conn, f'{args.experiment}_IND_TEST_{fold}', target, independent_test_data.ids, independent_test_predicted, simulate=False)
+                        db_store_predicted(conn, 'observed', target, independent_test_data.ids, independent_test_observed, simulate=False)
 
-                            del independent_test_data
+                        del independent_test_data
 
-                            log.info('Storing model.')
-                            db_store_model(conn, args.db_file, (lambda m, f: joblib.dump(m, f, compress=3, protocol=-1)), args.experiment, fold, model, history, params, valid_loss)
-                        else:
-                            log.info(f'Validation loss did not improve. Previous loss was {prev_loss}, new loss is {valid_loss}.')
+                        log.info('Storing model.')
+                        db_store_model(conn, args.db_file, (lambda m, f: joblib.dump(m, f, compress=3, protocol=-1)), args.experiment, fold, model, history, params, valid_loss)
+                    else:
+                        log.info(f'Validation loss did not improve. Previous loss was {prev_loss}, new loss is {valid_loss}.')
 
-                    log.info(params)
-                    log.info('Improvements:')
-                    avg_prev = sum([x[1] for x in improvements if x[1] is not None]) / len(improvements)
-                    avg_now = sum([x[2] for x in improvements]) / len(improvements)
-                    avg_delta = avg_prev - avg_now
-                    log.info(f'Average improvement:prev:{avg_prev:.3f}:now:{avg_now:.3f}:delta:{avg_delta:.3f}')
-                    for imp in improvements:
-                        log.info(imp)
+                log.info(params)
+                log.info('Improvements:')
+                avg_prev = sum([x[1] for x in improvements if x[1] is not None]) / len(improvements)
+                avg_now = sum([x[2] for x in improvements]) / len(improvements)
+                avg_delta = avg_prev - avg_now
+                log.info(f'Average improvement:prev:{avg_prev:.3f}:now:{avg_now:.3f}:delta:{avg_delta:.3f}')
+                for imp in improvements:
+                    log.info(imp)
 
     conn.close()
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])

@@ -12,6 +12,36 @@ max_solvent_acc = {'A': 106.0, 'C': 135.0, 'D': 163.0,
                    'W': 227.0, 'Y': 222.0}
 
 
+def scampi(infile, sequence):
+    """Parses the scampi output file.
+
+    Parameters
+    ----------
+    infile : str
+        Scampi file.
+    sequence : SeqRecord
+        sequence: SeqRecord object or any other object whichs __len__ method
+        returns the length of the sequence.
+
+    Returns:
+        NumPy array.
+
+    """
+    aa2topo = {
+        'I': [1, 0, 0, 0],
+        'M': [0, 1, 0, 0],
+        'O': [0, 0, 1, 0]
+    }
+    result = []
+    with open(infile, 'r') as fh:
+        for line in fh:
+            if not line.startswith('>'):
+                for aa in line.strip():
+                    result.append(aa2topo[aa])
+
+    return np.array([result])
+
+
 def psipred(infile, sequence):
     """Parses the PSIPRED .horiz output file.
 
@@ -73,6 +103,70 @@ def prof(infile, sequence):
                 result.append(aa2sec[aa])
 
     return np.array([result])
+
+
+def spot1d_sec(infile, sequence):
+    """
+    Parses the Spot1d output file.
+
+    Args:
+        infile: Spot1d output file.
+        sequence: SeqRecord object or any other object whichs __len__ method
+        returns the length of the sequence.
+
+    Returns:
+        NumPy array.
+    """
+    return np.loadtxt(infile, usecols=[14, 13, 12], skiprows=1).reshape((1, -1, 3))
+
+
+def spot1d_phi(infile, sequence):
+    """
+    Parses the Spot1d output file.
+
+    Args:
+        infile: Spot1d output file.
+        sequence: SeqRecord object or any other object whichs __len__ method
+        returns the length of the sequence.
+
+    Returns:
+        NumPy array.
+    """
+    return np.loadtxt(infile, usecols=10, skiprows=1).reshape((1, -1, 1))
+
+
+def spot1d_psi(infile, sequence):
+    """
+    Parses the Spot1d output file.
+
+    Args:
+        infile: Spot1d output file.
+        sequence: SeqRecord object or any other object whichs __len__ method
+        returns the length of the sequence.
+
+    Returns:
+        NumPy array.
+    """
+    return np.loadtxt(infile, usecols=11, skiprows=1).reshape((1, -1, 1))
+
+
+def spot1d_rsa(infile, sequence):
+    """
+    Parses the Spot1d output file.
+
+    Args:
+        infile: Spot1d output file.
+        sequence: SeqRecord object or any other object whichs __len__ method
+        returns the length of the sequence.
+
+    Returns:
+        NumPy array.
+    """
+    data = np.loadtxt(infile, usecols=4, skiprows=1).reshape((1, -1, 1))
+    for i in range(len(sequence)):
+        data[0, i, 0] /= max_solvent_acc[sequence[i].upper()]
+
+    return data
 
 
 def anglor(infile, sequence):

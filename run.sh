@@ -84,6 +84,7 @@ ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} pyth
 ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spinex_phi continuous.PhiAngles ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spXout
 ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spinex_psi continuous.PsiAngles ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spXout
 
+
 ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spinex_sec categorical.SecStruc ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spXout
 
 ls data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py data.db prof categorical.SecStruc data/{}.fasta data/{}.profRdb
@@ -99,8 +100,16 @@ ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} pyth
 
 ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db memsat_svm categorical.Topology ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.memsat_svm
 ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db polyphobius categorical.Topology ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.polyphobius
+ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {}
+python store_other_methods.py ~/databases/depth/data.db scampi
+categorical.Topology ~/databases/depth/data/{}.fasta
+~/databases/depth/data/{}.scampi
 
-# ML
+#
+ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spot1d_phi continuous.PhiAngles ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spot1d
+ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spot1d_psi continuous.PsiAngles ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spot1d
 
+ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spot1d_sec categorical.SecStruc ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spot1d
 
-
+ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spot1d_rsa continuous.RsaComplex ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spot1d
+ls ~/databases/depth/data | grep fasta | cut -f 1 -d "." | xargs -P 8 -I {} python store_other_methods.py ~/databases/depth/data.db spot1d_rsa continuous.RsaChain ~/databases/depth/data/{}.fasta ~/databases/depth/data/{}.spot1d

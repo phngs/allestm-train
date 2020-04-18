@@ -1,3 +1,4 @@
 {
-  "python.pythonPath": "/home/peter/.local/share/virtualenvs/allestm-train-3at1bVAs/bin/python"
+  "python.pythonPath": "/home/peter/.local/share/virtualenvs/allestm-train-3at1bVAs/bin/python",
+  "python.linting.enabled": false
 }
